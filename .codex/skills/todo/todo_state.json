@@ -1,33 +1,26 @@
 {
-  "task_name": "演示 todo skill",
-  "created_at": "2026-06-02T01:51:20Z",
+  "task_name": "处理 demo1-sse 的 8080 端口占用问题",
+  "created_at": "2026-06-02T04:04:10Z",
   "items": [
     {
       "id": 1,
-      "title": "拆分复杂任务",
+      "title": "定位占用 8080 的进程",
       "done": true,
-      "created_at": "2026-06-02T01:51:20Z",
-      "completed_at": "2026-06-02T01:51:27Z"
+      "created_at": "2026-06-02T04:04:10Z",
+      "completed_at": "2026-06-02T04:06:03Z"
     },
     {
       "id": 2,
-      "title": "执行第一个子任务",
+      "title": "停止冲突进程或改用其他端口",
       "done": true,
-      "created_at": "2026-06-02T01:51:20Z",
-      "completed_at": "2026-06-02T01:51:49Z"
+      "created_at": "2026-06-02T04:04:10Z",
+      "completed_at": "2026-06-02T04:06:28Z"
     },
     {
       "id": 3,
-      "title": "展示当前待办表",
+      "title": "重新启动 demo1-sse 并验证",
       "done": false,
-      "created_at": "2026-06-02T01:51:20Z",
-      "completed_at": null
-    },
-    {
-      "id": 4,
-      "title": "补充新的验证步骤",
-      "done": false,
-      "created_at": "2026-06-02T01:51:40Z",
+      "created_at": "2026-06-02T04:04:10Z",
       "completed_at": null
     }
   ]
