@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-$jdk21 = "C:\Users\15447\.jdks\temurin-21.0.11"
+$jdk21 = ""
 
 if (-not (Test-Path "$jdk21\bin\java.exe")) {
     throw "JDK 21 not found at $jdk21"
