@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>demo1-sse SSE Test</title>
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --panel: #fffaf2;
+      --ink: #1d2a33;
+      --muted: #5e6a72;
+      --line: #d7c7ae;
+      --accent: #0f766e;
+      --accent-2: #c2410c;
+      --err: #b91c1c;
+      --shadow: 0 18px 40px rgba(61, 42, 24, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.16), transparent 28%),
+        radial-gradient(circle at top right, rgba(194, 65, 12, 0.12), transparent 24%),
+        linear-gradient(180deg, #f8f3ea 0%, #f2ecdf 100%);
+    }
+
+    .shell {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+
+    .hero {
+      margin-bottom: 20px;
+      padding: 28px;
+      border: 1px solid rgba(215, 199, 174, 0.9);
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(255, 250, 242, 0.96), rgba(248, 243, 234, 0.9));
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 760px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: 380px minmax(0, 1fr);
+    }
+
+    .panel {
+      border: 1px solid rgba(215, 199, 174, 0.9);
+      border-radius: 22px;
+      background: rgba(255, 250, 242, 0.92);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.42);
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 17px;
+    }
+
+    .panel-body {
+      padding: 18px 20px 20px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+    }
+
+    .row {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 11px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      color: white;
+      background: var(--accent);
+    }
+
+    button.alt { background: #3f4c59; }
+    button.warn { background: var(--accent-2); }
+
+    button.ghost {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .status {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 18px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .status-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.12);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .badge.off {
+      background: rgba(63, 76, 89, 0.12);
+      color: #3f4c59;
+    }
+
+    .badge.err {
+      background: rgba(185, 28, 28, 0.12);
+      color: var(--err);
+    }
+
+    .tips {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px dashed var(--line);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    .stream {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .hint {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .log {
+      min-height: 520px;
+      max-height: 70vh;
+      overflow: auto;
+      padding: 16px;
+      border-radius: 18px;
+      background: #161d22;
+      color: #d9e4eb;
+      border: 1px solid #24313a;
+      font-family: Consolas, "Courier New", monospace;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .log-entry {
+      margin-bottom: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1px dashed rgba(217, 228, 235, 0.15);
+    }
+
+    .log-entry:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    .log-meta {
+      margin-bottom: 6px;
+      color: #90a8b8;
+      font-size: 12px;
+    }
+
+    .log-entry.complete .log-meta { color: #7dd3a9; }
+    .log-entry.error .log-meta { color: #fca5a5; }
+    .empty { color: #90a8b8; }
+
+    @media (max-width: 920px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <p class="eyebrow">demo1-sse / same-origin test</p>
+      <h1>SSE 测试面板</h1>
+      <p>这个页面默认走当前站点同源访问，不再单独配置 IP 和端口。只要 Spring Boot 用 `application.yml` 启动在目标端口上，页面就会直接请求 `/tasks/{taskId}/{stageId}`。</p>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>连接设置</h2>
+          <span id="connectBadge" class="badge off">未连接</span>
+        </div>
+        <div class="panel-body">
+          <div class="field">
+            <label for="originInfo">当前站点</label>
+            <input id="originInfo" type="text" readonly>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label for="taskId">Task ID</label>
+              <input id="taskId" type="text" value="demo-task">
+            </div>
+            <div class="field">
+              <label for="stageId">Stage ID</label>
+              <input id="stageId" type="number" value="11" min="1">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="lastEventId">Last-Event-ID</label>
+            <input id="lastEventId" type="text" placeholder="例如 11-3">
+          </div>
+
+          <div class="buttons">
+            <button id="connectBtn" type="button">连接 SSE</button>
+            <button id="disconnectBtn" type="button" class="alt">断开连接</button>
+            <button id="reconnectBtn" type="button" class="warn">使用 Last-Event-ID 重连</button>
+            <button id="clearBtn" type="button" class="ghost">清空日志</button>
+          </div>
+
+          <div class="status">
+            <div class="status-line">
+              <span>当前请求 URL</span>
+              <strong id="requestUrl">-</strong>
+            </div>
+            <div class="status-line">
+              <span>最近事件 ID</span>
+              <strong id="latestEventId">-</strong>
+            </div>
+            <div class="status-line">
+              <span>访问模式</span>
+              <strong>same-origin</strong>
+            </div>
+          </div>
+
+          <div class="tips">
+            先连接，再断开，再带着 `Last-Event-ID` 重连，可以测试断线重连。<br>
+            在两个标签页中用同一个 `taskId` 和 `stageId` 连接，可以观察互斥订阅行为。
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>事件流日志</h2>
+          <span class="hint">同源请求，不依赖独立 IP/Port 配置文件。</span>
+        </div>
+        <div class="panel-body stream">
+          <div id="log" class="log">
+            <div class="empty">等待连接...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const state = {
+      controller: null,
+      connected: false,
+      latestEventId: ""
+    };
+
+    const elements = {
+      originInfo: document.getElementById("originInfo"),
+      taskId: document.getElementById("taskId"),
+      stageId: document.getElementById("stageId"),
+      lastEventId: document.getElementById("lastEventId"),
+      requestUrl: document.getElementById("requestUrl"),
+      latestEventId: document.getElementById("latestEventId"),
+      connectBadge: document.getElementById("connectBadge"),
+      log: document.getElementById("log"),
+      connectBtn: document.getElementById("connectBtn"),
+      disconnectBtn: document.getElementById("disconnectBtn"),
+      reconnectBtn: document.getElementById("reconnectBtn"),
+      clearBtn: document.getElementById("clearBtn")
+    };
+
+    function setStatus(type, text) {
+      elements.connectBadge.className = "badge";
+      if (type === "off") {
+        elements.connectBadge.classList.add("off");
+      } else if (type === "err") {
+        elements.connectBadge.classList.add("err");
+      }
+      elements.connectBadge.textContent = text;
+    }
+
+    function ensureLogActive() {
+      const empty = elements.log.querySelector(".empty");
+      if (empty) {
+        empty.remove();
+      }
+    }
+
+    function appendLog(kind, title, payload) {
+      ensureLogActive();
+      const wrapper = document.createElement("div");
+      wrapper.className = `log-entry ${kind}`;
+
+      const meta = document.createElement("div");
+      meta.className = "log-meta";
+      meta.textContent = `[${new Date().toLocaleTimeString()}] ${title}`;
+
+      const body = document.createElement("div");
+      body.textContent = payload;
+
+      wrapper.append(meta, body);
+      elements.log.appendChild(wrapper);
+      elements.log.scrollTop = elements.log.scrollHeight;
+    }
+
+    function buildUrl() {
+      const taskId = encodeURIComponent(elements.taskId.value.trim());
+      const stageId = encodeURIComponent(elements.stageId.value.trim());
+      return `${location.origin}/tasks/${taskId}/${stageId}`;
+    }
+
+    function updateLatestEventId(value) {
+      state.latestEventId = value || "";
+      elements.latestEventId.textContent = state.latestEventId || "-";
+      elements.lastEventId.value = state.latestEventId;
+    }
+
+    function disconnect(reason = "手动断开") {
+      if (state.controller) {
+        state.controller.abort();
+        state.controller = null;
+      }
+      state.connected = false;
+      setStatus("off", "未连接");
+      appendLog("message", "连接结束", reason);
+    }
+
+    async function connect({ resume = false } = {}) {
+      if (state.connected) {
+        disconnect("建立新连接前先关闭旧连接");
+      }
+
+      const url = buildUrl();
+      const lastEventId = resume ? elements.lastEventId.value.trim() : "";
+      elements.requestUrl.textContent = url;
+
+      const headers = {
+        Accept: "text/event-stream"
+      };
+      if (lastEventId) {
+        headers["Last-Event-ID"] = lastEventId;
+      }
+
+      const controller = new AbortController();
+      state.controller = controller;
+      state.connected = true;
+      setStatus("on", "连接中");
+      appendLog("message", "发起连接", `${url}${lastEventId ? `\nLast-Event-ID: ${lastEventId}` : ""}`);
+
+      try {
+        const response = await fetch(url, {
+          method: "PUT",
+          headers,
+          signal: controller.signal,
+          cache: "no-store"
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        if (!response.body) {
+          throw new Error("ReadableStream 不可用");
+        }
+
+        setStatus("on", "已连接");
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) {
+            break;
+          }
+          buffer += decoder.decode(value, { stream: true });
+
+          let boundary = buffer.indexOf("\n\n");
+          while (boundary >= 0) {
+            const rawEvent = buffer.slice(0, boundary).trim();
+            buffer = buffer.slice(boundary + 2);
+            if (rawEvent) {
+              consumeSseBlock(rawEvent);
+            }
+            boundary = buffer.indexOf("\n\n");
+          }
+        }
+
+        if (!controller.signal.aborted) {
+          state.connected = false;
+          setStatus("off", "服务器已关闭流");
+          appendLog("complete", "流结束", "服务器端结束了当前 SSE 连接");
+        }
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+        state.connected = false;
+        setStatus("err", "连接异常");
+        appendLog("error", "连接异常", String(error));
+      } finally {
+        if (state.controller === controller) {
+          state.controller = null;
+        }
+      }
+    }
+
+    function consumeSseBlock(block) {
+      const lines = block.split(/\r?\n/);
+      let eventType = "message";
+      let eventId = "";
+      const dataLines = [];
+
+      for (const line of lines) {
+        if (line.startsWith("event:")) {
+          eventType = line.slice(6).trim();
+        } else if (line.startsWith("id:")) {
+          eventId = line.slice(3).trim();
+        } else if (line.startsWith("data:")) {
+          dataLines.push(line.slice(5).trimStart());
+        }
+      }
+
+      if (eventId) {
+        updateLatestEventId(eventId);
+      }
+
+      let payload = dataLines.join("\n");
+      try {
+        const parsed = JSON.parse(payload);
+        payload = JSON.stringify(parsed, null, 2);
+      } catch (_error) {
+      }
+
+      appendLog(
+        eventType === "error" ? "error" : eventType === "complete" ? "complete" : "message",
+        `${eventType}${eventId ? ` / id=${eventId}` : ""}`,
+        payload || "(empty)"
+      );
+    }
+
+    elements.connectBtn.addEventListener("click", () => connect({ resume: false }));
+    elements.disconnectBtn.addEventListener("click", () => disconnect());
+    elements.reconnectBtn.addEventListener("click", () => connect({ resume: true }));
+    elements.clearBtn.addEventListener("click", () => {
+      elements.log.innerHTML = '<div class="empty">等待连接...</div>';
+    });
+
+    elements.taskId.addEventListener("input", () => {
+      elements.requestUrl.textContent = buildUrl();
+    });
+    elements.stageId.addEventListener("input", () => {
+      elements.requestUrl.textContent = buildUrl();
+    });
+
+    elements.originInfo.value = location.origin;
+    elements.requestUrl.textContent = buildUrl();
+  </script>
+</body>
+</html>
