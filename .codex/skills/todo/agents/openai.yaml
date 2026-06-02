@@ -1,0 +1,4 @@
+interface:
+  display_name: "Todo"
+  short_description: "Generate and maintain a visible todo table for complex tasks."
+  default_prompt: "Break complex work into subtasks, keep a todo log table updated, and show the current checklist after each status change."
