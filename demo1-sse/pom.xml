@@ -15,7 +15,6 @@
     <name>demo1-sse</name>
     <description>SSE streaming demo project</description>
 
-
     <dependencies>
         <!-- Spring Boot WebFlux -->
         <dependency>
