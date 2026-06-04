@@ -1,0 +1,16 @@
+去掉 Last-Event-ID
+
+  后端在 demo1-sse/src/main/java/com/fuyue/adapter/controller/TaskController.java:32 调整：
+
+  - 删除 @RequestHeader("Last-Event-ID") 入参，接口现在只收 taskId 和 stageId
+  - 删除 parseLastSeenSequence(...) 和基于序号的 filter(...)
+  - 保留 SSE 的 event/id/retry/data 输出格式，但“刷新重连”改成仅依赖相同 taskId + stageId
+    复用当前执行流
+
+  测试页同步清理 demo1-sse/src/main/resources/static/index.html:263 和 demo1-sse/
+  src/main/resources/static/index.html:289：
+
+  - 去掉 Last-Event-ID 输入框和“使用 Last-Event-ID 重连”按钮
+  - fetch 不再带这个 header
+  - 文案改成“刷新后用相同 taskId + stageId 继续订阅”
+

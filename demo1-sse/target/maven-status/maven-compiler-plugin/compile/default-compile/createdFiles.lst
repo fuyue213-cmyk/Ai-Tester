@@ -1,0 +1,5 @@
+com\fuyue\adapter\sse\SseExclusiveSubscriptionGate.class
+com\fuyue\client\vo\StreamEventVo$StreamEventVoBuilder.class
+com\fuyue\adapter\controller\TaskController.class
+com\fuyue\client\vo\StreamEventVo.class
+com\fuyue\app\service\TaskAppService.class

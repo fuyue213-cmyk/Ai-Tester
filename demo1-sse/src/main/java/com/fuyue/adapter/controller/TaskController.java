@@ -15,18 +15,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
-/**
- * demo1-sse 控制器。
- *
- * <p>只测试两件事：</p>
- * <p>1. Last-Event-ID 断线重连。</p>
- * <p>2. 同一路由键的互斥订阅。</p>
- */
 @Slf4j
 @Tag(name = "任务")
 @AllArgsConstructor
@@ -37,14 +29,22 @@ public class TaskController {
     private final TaskAppService taskAppService;
     private final SseExclusiveSubscriptionGate sseExclusiveSubscriptionGate;
 
-    @Operation(summary = "执行步骤（SSE）", description = "仅用于测试断线重连和互斥订阅。")
+    /**
+     * 执行步骤（SSE 流式推送）。
+     * <p>
+     * 页面刷新后，前端通过相同的 taskId + stageId 再次请求，直接复用当前正在执行的步骤流。
+     * 这里不再依赖 Last-Event-ID 做事件级续传，只保留 SSE 的 event/id/retry/data 输出格式。
+     * </p>
+     */
+    @Operation(
+            summary = "执行步骤（SSE）",
+            description = "支持 SSE 流式推送、刷新后基于相同 taskId + stageId 继续订阅当前步骤流，以及同一路由键的互斥订阅。"
+    )
     @PutMapping(value = "/{taskId}/{stageId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<Flux<ServerSentEvent<StreamEventVo>>> executeStep(
             @PathVariable("taskId") String taskId,
-            @PathVariable("stageId") long stageId,
-            @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId) {
-        log.info("接收执行步骤请求: taskId={}, stageId={}, lastEventId={}", taskId, stageId, lastEventId);
-        long lastSeenSequence = parseLastSeenSequence(lastEventId, stageId);
+            @PathVariable("stageId") long stageId) {
+        log.info("接收执行步骤请求: taskId={}, stageId={}", taskId, stageId);
 
         Flux<StreamEventVo> eventVoFlux = sseExclusiveSubscriptionGate.exclusive(
                 "sse:step:" + taskId + ":" + stageId,
@@ -52,7 +52,6 @@ public class TaskController {
 
         Flux<ServerSentEvent<StreamEventVo>> sseFlux = eventVoFlux
                 .index()
-                .filter(tuple -> tuple.getT1() + 1 > lastSeenSequence)
                 .map(tuple -> {
                     long index = tuple.getT1();
                     StreamEventVo eventVo = tuple.getT2();
@@ -91,22 +90,5 @@ public class TaskController {
             return "chunk";
         }
         return "message";
-    }
-
-    private long parseLastSeenSequence(String lastEventId, long stageId) {
-        if (lastEventId == null || lastEventId.isBlank()) {
-            return 0;
-        }
-        String prefix = stageId + "-";
-        if (!lastEventId.startsWith(prefix)) {
-            log.warn("忽略无法识别的 Last-Event-ID: stageId={}, lastEventId={}", stageId, lastEventId);
-            return 0;
-        }
-        try {
-            return Long.parseLong(lastEventId.substring(prefix.length()));
-        } catch (NumberFormatException ex) {
-            log.warn("忽略非法的 Last-Event-ID: stageId={}, lastEventId={}", stageId, lastEventId);
-            return 0;
-        }
     }
 }
